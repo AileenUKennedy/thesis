@@ -315,10 +315,10 @@ NIL
 1
 
 SLIDER
-6
-144
-178
-177
+669
+30
+841
+63
 num-nodes
 num-nodes
 0
@@ -330,10 +330,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-7
-185
-179
-218
+669
+73
+841
+106
 average-degree
 average-degree
 2
@@ -345,25 +345,25 @@ NIL
 HORIZONTAL
 
 SLIDER
-7
-223
-179
-256
+669
+115
+841
+148
 rewiring-probability
 rewiring-probability
 0
 1
-0.59
+0.58
 0.01
 1
 NIL
 HORIZONTAL
 
 BUTTON
-46
-56
-128
-89
+10
+78
+92
+111
 NIL
 rewire-all
 NIL
