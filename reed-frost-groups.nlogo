@@ -84,9 +84,9 @@ set totalNodes age0-4 + age5-14 + age15-44 + age45+
 
   set ce 2
   set p ce / totalNodes
-  show p
+ ;; show p
 
-show totalNodes
+;;show totalNodes
 
   reset-ticks
 end
@@ -433,7 +433,7 @@ to spread-virus
     ask link-neighbors with [susceptible?]
     [
 
-      show count link-neighbors with [breed = infants and infected?]
+     ;; show count link-neighbors with [breed = infants and infected?]
 
 
        ;; count the number of neighbour which are infected and what breed they are
@@ -443,12 +443,12 @@ to spread-virus
     set infected-nei-adult count link-neighbors with [breed = adults and infected?]
     set infected-nei-elder  count link-neighbors with [breed = elders and infected?]
 
-    show "links"
-    show infected-neighbours
-    show infected-nei-infant
-    show infected-nei-youth
-    show infected-nei-adult
-    show infected-nei-elder
+   ;; show "links"
+   ;; show infected-neighbours
+   ;; show infected-nei-infant
+   ;; show infected-nei-youth
+   ;; show infected-nei-adult
+   ;; show infected-nei-elder
 ;;    show count link-neighbors with [breed = infants and infected?]
   ;;  show count link-neighbors with [breed = youths and infected?]
     ;;show count link-neighbors with [breed = adults and infected?]
@@ -458,9 +458,9 @@ to spread-virus
 
 
       set infected-neighbours count link-neighbors with [infected?]
-      show "Infected-Neighbours"
-      show infected-neighbours
-      show infected-2
+      ;;show "Infected-Neighbours"
+      ;;show infected-neighbours
+      ;;show infected-2
       ask link-neighbors with [infected?]
       [
        ;; show count infants
@@ -474,7 +474,7 @@ to spread-virus
     ;; set lambda (1 - ( 1 - p ) ^ num-infected )
     ;; formula using infected number of contacts
     set lambda (1 - ( 1 - infect-prob) ^ infected-neighbours )
-    show lambda
+    ;;show lambda
     ;; show lambda
     if random-float 1 < lambda
       [
