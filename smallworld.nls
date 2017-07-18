@@ -1,0 +1,69 @@
+;;to measure small worldness 
+;; calculate clustering coefficient and shortest average path of graph
+;; get clustering coefficient and shortest average path of ER randomgraph
+;;using same average degree and number of nodes
+;;ER graph
+;;find-clustering-coefficient finds the clustering coefficient
+;; and assigns to global variable clustering-coefficient
+;; 
+
+to find-small-world-ness
+  
+  set clustering-coefficient 0
+  find-clustering-coefficient
+  show "cc"
+  show clustering-coefficient
+  if erCC = 0
+  [
+   set erCC 1 
+  ]
+  
+  if erPath = 0
+  [
+    set erPath 1
+  ]
+  set clusteringMetric  (clustering-coefficient / erCC )
+  
+  set pathMetric (average-path-length / erPath)
+  
+  set smallWorldNess (clusteringMetric / pathMetric)
+  show "SmallWorldNess"
+  show smallWorldNess
+  
+  
+end
+
+
+
+to-report in-neighborhood? [ hood ]
+  report ( member? end1 hood and member? end2 hood )
+end
+
+
+to find-clustering-coefficient
+  set clustering-coefficient 0
+   
+  ifelse all? turtles [count link-neighbors <= 1]
+  [
+    ;; it is undefined
+    ;; what should this be?
+    set clustering-coefficient 0
+  ]
+  [
+    let total 0
+    ask turtles with [ count link-neighbors <= 1]
+      [ set node-clustering-coefficient "undefined" ]
+    ask turtles with [ count link-neighbors > 1]
+    [
+      let hood link-neighbors
+      set node-clustering-coefficient (2 * count links with [ in-neighborhood? hood ] /
+                                         ((count hood) * (count hood - 1)) )
+      ;; find the sum for the value at turtles
+      set total total + node-clustering-coefficient
+    ]
+    ;; take the average
+   ;; show "total"
+   ;; show total
+    set clustering-coefficient total / count turtles with [count link-neighbors > 1]
+  ]
+end

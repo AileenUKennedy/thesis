@@ -1,0 +1,129 @@
+  ;; do-calculations reports true if the network is connected,
+;;   and reports false if the network is disconnected.
+;; (In the disconnected case, the average path length does not make sense,
+;;   or perhaps may be considered infinite)
+;;Wilensky, U. (2005). NetLogo Small Worlds model. http://ccl.northwestern.edu/netlogo/models/SmallWorlds.
+;;Center for Connected Learning and Computer-Based Modeling,
+;;Northwestern University, Evanston, IL.
+  to-report do-calculations
+
+  ;; set up a variable so we can report if the network is disconnected
+  let connected? true
+
+  ;; find the path lengths in the network
+  find-path-lengths
+
+  let num-connected-pairs sum [length remove infinity (remove 0 distance-from-other-turtles)] of turtles
+
+  ;; In a connected network on N nodes, we should have N(N-1) measurements of distances between pairs,
+  ;; and none of those distances should be infinity.
+  ;; If there were any "infinity" length paths between nodes, then the network is disconnected.
+  ;; In that case, calculating the average-path-length doesn't really make sense.
+  ifelse ( num-connected-pairs != (count turtles * (count turtles - 1) ))
+  [
+      set average-path-length infinity
+      ;; report that the network is not connected
+      set connected? false
+  ]
+  [
+    set average-path-length (sum [sum distance-from-other-turtles] of turtles) / (num-connected-pairs)
+  ]
+
+;;show "averge path  " show average-path-length
+  ;; report whether the network is connected or not
+  report connected?
+end
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Path length computations ;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;
+;;Wilensky, U. (2005). NetLogo Small Worlds model. http://ccl.northwestern.edu/netlogo/models/SmallWorlds.
+;;Center for Connected Learning and Computer-Based Modeling,
+;;Northwestern University, Evanston, IL.
+
+;; Implements the Floyd Warshall algorithm for All Pairs Shortest Paths
+;; It is a dynamic programming algorithm which builds bigger solutions
+;; from the solutions of smaller subproblems using memoization that
+;; is storing the results.
+;; It keeps finding incrementally if there is shorter path through
+;; the kth node.
+;; Since it iterates over all turtles through k,
+;; so at the end we get the shortest possible path for each i and j.
+
+to find-path-lengths
+  ;; reset the distance list
+  ask turtles
+  [
+    set distance-from-other-turtles []
+  ]
+
+  let i 0
+  let j 0
+  let k 0
+  let node1 one-of turtles
+  let node2 one-of turtles
+  let node-count count turtles
+  ;; initialize the distance lists
+  while [i < node-count]
+  [
+    set j 0
+    while [j < node-count]
+    [
+      set node1 turtle i
+      set node2 turtle j
+      ;; zero from a node to itself
+      ifelse i = j
+      [
+        ask node1 [
+          set distance-from-other-turtles lput 0 distance-from-other-turtles
+        ]
+      ]
+      [
+        ;; 1 from a node to it's neighbor
+        ifelse [ link-neighbor? node1 ] of node2
+        [
+          ask node1 [
+            set distance-from-other-turtles lput 1 distance-from-other-turtles
+          ]
+        ]
+        ;; infinite to everyone else
+        [
+          ask node1 [
+            set distance-from-other-turtles lput infinity distance-from-other-turtles
+          ]
+        ]
+      ]
+      set j j + 1
+    ]
+    set i i + 1
+  ]
+  set i 0
+  set j 0
+  let dummy 0
+  while [k < node-count]
+  [
+    set i 0
+    while [i < node-count]
+    [
+      set j 0
+      while [j < node-count]
+      [
+        ;; alternate path length through kth node
+        set dummy ( (item k [distance-from-other-turtles] of turtle i) +
+                    (item j [distance-from-other-turtles] of turtle k))
+        ;; is the alternate path shorter?
+        if dummy < (item j [distance-from-other-turtles] of turtle i)
+        [
+          ask turtle i [
+            set distance-from-other-turtles replace-item j distance-from-other-turtles dummy
+          ]
+        ]
+        set j j + 1
+      ]
+      set i i + 1
+    ]
+    set k k + 1
+  ]
+
+end
