@@ -1,4 +1,4 @@
-__includes["calculations.nls" "wire.nls"]
+__includes["calculations.nls" "wire.nls" "smallworld.nls" "normalDistribution.nls" "checkTurtles.nls"]
 
 breed [ infants infant] ;; 0-4
 breed [ youths youth] ;; 5-14
@@ -17,8 +17,10 @@ turtles-own
   preinfectious-timer ;; number of ticks since turtle become pre-infected
   infected-timer ;;number of ticks since turtle become infected
   lambda
-  distance-from-other-turtles
+  distance-from-other-turtles ;; used in finding the average path length
   infected-neighbours
+  node-clustering-coefficient ;;used in finding the clustering coefficient
+
   ]
 
 links-own
@@ -42,15 +44,27 @@ globals
   k-nei
   ce
   totalNodes
+   infant-degree
+  youth-degree
+  adult-degree
+  elder-degree
   ;;severity
+  movenode1
+  movenode2
+  nei-node2
+  clustering-coefficient ;; used in finding the clustering coefficient
+  clusteringMetric ;; used in calculating small world ness
+  pathMetric ;; used in calculating small world ness
+  smallWorldNess ;; used in calculating small world ness
+  severe-recover-delay ;; severe cases can have a longer recovery = recover-delay + extra delay
+
+  severityRandom ;; number used to determine which category of severity an individual goes in to
+
 ]
 
 to setup
   clear-all
-  ;;show "initial"
-  ;;show initial-infected
-  ;; setup-nodes
-  ;; setup-links
+
 
   set infinity 99999  ;; just an arbitrary choice for a large number
                     ;;set-default-shape turtles "die 1"
@@ -58,20 +72,40 @@ to setup
 set totalNodes Number-0-4 + Number-5-14 + Number-15-44 + Number-45
 
 
+set infant-degree (average-degree * relative0-4)
+set youth-degree (average-degree * relative5-14)
+set adult-degree (average-degree * relative15-44)
+set elder-degree (average-degree * relative45)
+
+set severe-recover-delay (recovery-delay + severe-extra-delay)
+
+
+
 show "here"
 make-turtles
 show"there"
 let success? false
+let SWsuccess? false
 
-;;show success?
-while [not success? ]
+while [not SWsuccess?]
+[
+  ;;show success?
+  while [not success? ]
   [
     wire-them
     set success? do-calculations
-    ;; show "success?"
-    ;; show success?
+
   ]
   rewire-all
+ ;; check-turtles
+
+    find-clustering-coefficient
+    find-small-world-ness
+    if smallWorldNess > 1
+    [
+      set SWsuccess? true
+    ]
+]
 
 ;;set initial number of adults to be infected
 ;; change adults to turtles to select from entire population.
@@ -82,12 +116,17 @@ while [not success? ]
 
   set ce 2
   set p ce / totalNodes
- ;; show p
 
-;;show totalNodes
+
+
+
+
 
   reset-ticks
 end
+
+
+
 
 to make-turtles
 
@@ -147,10 +186,14 @@ ask turtles with [ preinfectious?]
 ask turtles with [infected?]
   [
     set infected-timer infected-timer + 1
-    if infected-timer > recovery-delay
+    if infected-timer > recovery-delay and severe? = false
     [
       set-removed
     ]
+    if infected-timer > severe-recover-delay and severe? = true
+      [
+        set-removed
+      ]
   ]
 
   spread-virus
@@ -213,22 +256,7 @@ to set-infected ;;turtle procedure
   set infected-timer 0
  ;; set color red
 
-  let severity random-float 1.0
-  ifelse severity < 0.34
-  [ set asymptomatic? true
-    set moderate? false
-    set severe? false
-    set color magenta ]
-  [ifelse severity < 0.67
-    [ set asymptomatic? false
-      set moderate? true
-      set severe? false
-      set color orange  ]
-    [set asymptomatic? false
-      set moderate? false
-      set severe? true
-      set color red]
-  ]
+ pickSeverity
 
 
 
@@ -380,25 +408,25 @@ NIL
 0
 
 SLIDER
-14
-127
-186
-160
+16
+63
+188
+96
 average-degree
 average-degree
 2
 100
-6.0
+10.0
 2
 1
 NIL
 HORIZONTAL
 
 SLIDER
-13
-170
-185
-203
+14
+141
+186
+174
 initial-infected
 initial-infected
 1
@@ -411,9 +439,9 @@ HORIZONTAL
 
 SLIDER
 13
-213
+217
 185
-246
+250
 infect-delay
 infect-delay
 1
@@ -461,31 +489,31 @@ PENS
 "removed" 1.0 0 -10899396 true "" "plot(count turtles with [removed?])"
 
 SLIDER
-5
-352
-177
-385
+16
+102
+188
+135
 rewiring-probability
 rewiring-probability
 0
 1
-0.27
+0.16
 0.01
 1
 NIL
 HORIZONTAL
 
 SLIDER
-12
-306
-184
-339
+13
+177
+185
+210
 infect-prob
 infect-prob
 0
 1
-0.18
-0.01
+0.057
+0.001
 1
 NIL
 HORIZONTAL
@@ -554,7 +582,7 @@ Number-0-4
 Number-0-4
 0
 1000
-51.0
+57.0
 1
 1
 NIL
@@ -569,7 +597,7 @@ Number-5-14
 Number-5-14
 0
 1000
-50.0
+19.0
 1
 1
 NIL
@@ -584,7 +612,7 @@ Number-15-44
 Number-15-44
 0
 1000
-50.0
+13.0
 1
 1
 NIL
@@ -599,7 +627,7 @@ Number-45
 Number-45
 0
 1000
-45.0
+13.0
 1
 1
 NIL
@@ -660,6 +688,73 @@ relative45
 0
 3
 1.14
+0.001
+1
+NIL
+HORIZONTAL
+
+INPUTBOX
+979
+172
+1050
+232
+erCC
+0.1014
+1
+0
+Number
+
+INPUTBOX
+1063
+174
+1127
+234
+erPath
+2.2492
+1
+0
+Number
+
+SLIDER
+12
+301
+184
+334
+severe-extra-delay
+severe-extra-delay
+1
+100
+2.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+977
+244
+1149
+277
+severityMean
+severityMean
+0
+20
+5.0
+0.001
+1
+NIL
+HORIZONTAL
+
+SLIDER
+977
+277
+1149
+310
+severitySD
+severitySD
+0
+20
+2.0
 0.001
 1
 NIL

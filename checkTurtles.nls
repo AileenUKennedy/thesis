@@ -23,42 +23,42 @@ while [n < count turtles][
          while [z <= (infant-degree - count my-links)]
          [
            ;;while z is less than the number of links needed to be added
-           ;;pick a random turtle that isn't already a neighbour
-           ;;count the number of links that node has and if its degree is
-           ;;above the average degree + 2  set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) ], pick another node.
-           ;; keep
+           ;;pick a random turtle that isn't already a neighbour and doesn't have too high a degree
+           ;;c
            show movenode1
+         
           set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (count my-links <= (average-degree + 2)) ]
 
-          ask movenode2 [ show count my-links]
-         ask movenode2[
-           show "this stuff!!!"
-           show movenode2
-           ;;show node1
-           show count my-links
-           set nei-node2 count my-links
-         ]
+        ;;  ask movenode2 [ show count my-links]
+        ;; ask movenode2[
+        ;;   show "this stuff!!!"
+       ;;    show movenode2
+         ;  ;;show node1
+        ;;   show count my-links
+        ;;   set nei-node2 count my-links
+        ;; ]
          
          ;;want to find a new node to link with that doesn't have already have a degree above average + 1
-         while [nei-node2  > (average-degree + 2) ]
-          [
-                         set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) ]
+        ;; while [nei-node2  > (average-degree + 2) ]
+        ;;  [
+         ;;                set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) ]
 
-             ask movenode2[
-           show "while lop"
-           show movenode2
+         ;;    ask movenode2[
+        ;;   show "while lop"
+        ;;   show movenode2
            ;;show node1
-           show count my-links
-           set nei-node2 count my-links
-             ]
-          ] ;; end of while loop
-
+        ;;   show count my-links
+        ;;   set nei-node2 count my-links
+        ;;     ]
+         ;; ] ;; end of while loop
+         ;;create a link between the nodes
            ask movenode1 [ create-link-with movenode2 [ set color yellow  ] ]
           set z z + 1
          ]
        ]
       if  count my-links >  (infant-degree + 1)
       [
+        ;;if infant turtle has too many connections/links
         show "too many"
         show count my-links
         set movenode1 turtle n
