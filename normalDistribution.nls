@@ -1,8 +1,8 @@
 to pickNumber
   
   set severityRandom random-normal severityMean severitySD  
-  show severityRandom
-  show "stuff"
+  ;;show severityRandom
+  ;;show "stuff"
   
 end
 
@@ -13,15 +13,15 @@ to pickSeverity
   
   ifelse severityRandom < (severityMean - severitySD)
   [
-    show "asymptomatic"
+   ;; show "asymptomatic"
     set asymptomatic? true
     set moderate? false
     set severe? false
-    set color magenta
+    set color pink
   ]
   [ifelse severityRandom > (severityMean + severitySD)
     [
-      show "severe" 
+    ;;  show "severe" 
       set asymptomatic? false
       set moderate? false
       set severe? true
@@ -29,7 +29,7 @@ to pickSeverity
       
     ]
     [
-      show "moderate"
+     ;; show "moderate"
       set asymptomatic? false
       set moderate? true
       set severe? false

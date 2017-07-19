@@ -11,8 +11,8 @@ to find-small-world-ness
   
   set clustering-coefficient 0
   find-clustering-coefficient
-  show "cc"
-  show clustering-coefficient
+  ;;show "cc"
+ ;; show clustering-coefficient
   if erCC = 0
   [
    set erCC 1 

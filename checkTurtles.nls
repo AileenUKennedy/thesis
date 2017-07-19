@@ -66,6 +66,8 @@ while [n < count turtles][
         show "Turtle to chop"
         show movenode2
         ask movenode2 [show count my-links]
+        ask movenode1 [ ask link-with movenode2 [ die ] ] 
+
        
       ]
     ]
