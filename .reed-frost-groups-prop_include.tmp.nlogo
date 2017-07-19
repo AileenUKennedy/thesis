@@ -58,6 +58,8 @@ globals
   severe-recover-delay ;; severe cases can have a longer recovery = recover-delay + extra delay
 
   severityRandom ;; number used to determine which category of severity an individual goes in to
+  counter ;;counter
+
 
 ]
 

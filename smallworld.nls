@@ -65,5 +65,7 @@ to find-clustering-coefficient
    ;; show "total"
    ;; show total
     set clustering-coefficient total / count turtles with [count link-neighbors > 1]
+    show "Clusterin coefficient"
+    show clustering-coefficient
   ]
 end

@@ -13,46 +13,20 @@ while [n < count turtles][
     ;; when killing it links, it picks random nodes and as long as the link count is > 1, it will kill a link.
     ifelse breed = infants
     [
-
       if  count my-links < (infant-degree - 1 )
        [
          show "too few"
          show count my-links
          set movenode1 turtle n
          let z 0
-         while [z <= (infant-degree - count my-links)]
+         while [z < (infant-degree - count my-links)]
          [
            ;;while z is less than the number of links needed to be added
            ;;pick a random turtle that isn't already a neighbour and doesn't have too high a degree
-           ;;c
+          
            show movenode1
-         
           set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (count my-links <= (average-degree + 2)) ]
-
-        ;;  ask movenode2 [ show count my-links]
-        ;; ask movenode2[
-        ;;   show "this stuff!!!"
-       ;;    show movenode2
-         ;  ;;show node1
-        ;;   show count my-links
-        ;;   set nei-node2 count my-links
-        ;; ]
-         
-         ;;want to find a new node to link with that doesn't have already have a degree above average + 1
-        ;; while [nei-node2  > (average-degree + 2) ]
-        ;;  [
-         ;;                set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) ]
-
-         ;;    ask movenode2[
-        ;;   show "while lop"
-        ;;   show movenode2
-           ;;show node1
-        ;;   show count my-links
-        ;;   set nei-node2 count my-links
-        ;;     ]
-         ;; ] ;; end of while loop
-         ;;create a link between the nodes
-           ask movenode1 [ create-link-with movenode2 [ set color yellow  ] ]
+          ask movenode1 [ create-link-with movenode2 [ set color yellow  ] ]
           set z z + 1
          ]
        ]
@@ -62,13 +36,15 @@ while [n < count turtles][
         show "too many"
         show count my-links
         set movenode1 turtle n
-        set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (count my-links > 1)]
-        show "Turtle to chop"
-        show movenode2
-        ask movenode2 [show count my-links]
-        ask movenode1 [ ask link-with movenode2 [ die ] ] 
-
-       
+        set counter 0
+        while [ counter < ( count my-links - infant-degree)]
+        [
+          set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (count my-links > 1)]
+          show "Turtle to chop"
+          show movenode2
+          ask movenode2 [show count my-links]
+          ask movenode1 [ ask link-with movenode2 [ die ] ] 
+        ]
       ]
     ]
     [
@@ -78,40 +54,102 @@ while [n < count turtles][
           [
             show " too few"
             show count my-links
+            set movenode1 turtle n
+            set counter 0
+            while [counter < (youth-degree - count my-links)]
+            [
+              ;;while counter is less than the number of links needed to be added
+              ;;pick a random turtle that isn't already a neighbour and doesn't have too high a degree
+              show movenode1
+              set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (count my-links <= (average-degree + 2)) ]
+              ask movenode1 [ create-link-with movenode2 [ set color pink  ] ]
+              set counter counter + 1
+            ]
           ]
-        if count my-links >= ( youth-degree + 1)
+        if count my-links > ( youth-degree + 1)
         [
           show "too many"
           show count my-links
+          set movenode1 turtle n
+          set counter 0
+          while [ counter < ( count my-links - youth-degree)]
+        [
+          set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (count my-links > 1)]
+          show "Turtle to chop"
+          show movenode2
+          ask movenode2 [show count my-links]
+          ask movenode1 [ ask link-with movenode2 [ die ] ] 
+        ]
         ]
       ]
       [
         ifelse breed = adults
         [
           if  count my-links < (adult-degree - 1 )
+          ;;considers too few if more than 1 less than average
           [
             show "too few"
             show count my-links
+            set movenode1 turtle n
+            set counter 0
+            ;;while counter is less than the number of links needed to be added
+            ;;pick a random turtle that isn't already a neighbour and doesn't have too high a degree
+            while [counter < (adult-degree - count my-links)]
+            [
+              show movenode1
+              set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (count my-links <= (average-degree + 2)) ]
+              ask movenode1 [ create-link-with movenode2 [ set color red  ] ]
+              set counter counter + 1
+            ]
           ]
-          if count my-links >= (adult-degree + 1)
+          if count my-links > (adult-degree + 1)
           [
             show "too many"
             show count my-links
+            set movenode1 turtle n
+            set counter 0
+            while [ counter < ( count my-links - adult-degree)]
+            [
+              set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (count my-links > 1)]
+              show "Turtle to chop"
+              show movenode2
+              ask movenode2 [show count my-links]
+              ask movenode1 [ ask link-with movenode2 [ die ] ] 
+            ]
           ]
-
         ]
         [
          if  count my-links < (elder-degree - 1 )
          [
            show "too few"
            show count my-links
+           set movenode1 turtle n
+           set counter 0
+           ;;while counter is less than the number of links needed to be added
+           ;;pick a random turtle that isn't already a neighbour and doesn't have too high a degree
+           while [counter < (elder-degree - count my-links)]
+           [
+             show movenode1
+             set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (count my-links <= (average-degree + 2)) ]
+             ask movenode1 [ create-link-with movenode2 [ set color green  ] ]
+             set counter counter + 1
+            ]
          ]
-         if count my-links >= (elder-degree + 1)
+         if count my-links > (elder-degree + 1)
          [
            show "too many"
            show count my-links
+           set movenode1 turtle n
+           set counter 0
+           while [ counter < ( count my-links - elder-degree)]
+           [
+             set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (count my-links > 1)]
+             show "Turtle to chop"
+             show movenode2
+             ask movenode2 [show count my-links]
+             ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           ]
          ]
-
         ]
       ]
 
