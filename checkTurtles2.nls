@@ -1,0 +1,118 @@
+to check-turtles2
+  
+  ;;populate contact rate table
+  set contact table:make
+  table:put contact "ItoI" 2.38
+  table:put contact "ItoY" 1.12
+  table:put contact "ItoA" 2.38
+  table:put contact "ItoE" 1.19
+  table:put contact "YtoY" 9.2
+  table:put contact "YtoA" 3.12
+  table:put contact "CtoE" 1.48
+  table:put contact "AtoA" 9.62
+  table:put contact "AtoE" 4.25
+  table:put contact "EtoE" 5.11
+  
+  print table:keys contact
+  
+  show "check-2"
+  let n 0
+  while [n < count turtles][
+    ask turtle n [
+     
+      ifelse breed = infants
+      [
+        
+        show "This is an infant"
+        let ItoICount count link-neighbors with [breed = infants]
+        
+        if ItoICount < round (table:get contact "ItoI")
+        [
+          show "Too few infant to infant"
+          set movenode1 turtle n
+          set counter 0
+           while [counter < (round(table:get contact "ItoI") - ItoICount)]
+         [
+           ;;while z is less than the number of links needed to be added
+           ;;pick a random turtle that isn't already a neighbour and doesn't have too high a degree
+          
+           show movenode1
+           set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = infants) and (count link-neighbors with [breed = infants]  < (table:get contact "ItoI")) ]
+          ask movenode1 [ create-link-with movenode2 [ set color yellow  ] ]
+          set counter counter + 1
+         ]
+          
+          
+        ]
+        if ItoICount > round (table:get contact "ItoI")
+        [
+         show "Too many infant to infant" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( ItoICount - round (table:get contact "ItoI"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( ItoICount - round (table:get contact "ItoI"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = infants) and (count link-neighbors with [breed = infants]  > (table:get contact "ItoI"))]
+           show "Turtle to chop"
+           show movenode2
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             show "break the loop"
+             set counter ( ItoICount - round (table:get contact "ItoI"))
+           ]
+          
+        ]
+         
+         
+        ]
+      
+        
+        show ItoIcount
+        
+        let ItoYCount count link-neighbors with [breed = youths]
+        show ItoYCount
+        show "ItoY Value"
+        show table:get contact "ItoY"
+        if ItoYCount <  round (table:get contact "ItoY")
+        [
+          
+          
+          show "Too few youths"
+        ]
+        
+        
+        
+        show count link-neighbors with [breed = adults]
+        
+        show count link-neighbors with [breed = elders]
+        
+        let ItoECount count link-neighbors with [breed = elders]
+        if ItoEcount < table:get contact "ItoE"
+        [
+          show "not enought elders"
+        ]
+        
+      ]
+      
+      
+      [
+      ]
+
+
+
+
+    ]
+    set n n + 1
+  ]
+  
+  show table:get contact "ItoI"
+  
+end

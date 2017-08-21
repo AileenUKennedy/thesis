@@ -1,4 +1,6 @@
-__includes["calculations.nls" "wire.nls" "smallworld.nls" "normalDistribution.nls" "checkTurtles.nls"]
+__includes["calculations.nls" "wire.nls" "smallworld.nls" "normalDistribution.nls" "checkTurtles.nls" "checkTurtles2.nls"]
+
+extensions [ table]
 
 breed [ infants infant] ;; 0-4
 breed [ youths youth] ;; 5-14
@@ -59,7 +61,9 @@ globals
 
   severityRandom ;; number used to determine which category of severity an individual goes in to
   counter ;;counter
+  calcAvgDegree
 
+  contact ;; table with contact rates between age groups
 
 ]
 
@@ -417,7 +421,7 @@ average-degree
 average-degree
 2
 100
-10.0
+14.0
 2
 1
 NIL
