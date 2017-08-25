@@ -8,7 +8,7 @@ to check-turtles2
   table:put contact "ItoE" 1.19
   table:put contact "YtoY" 9.2
   table:put contact "YtoA" 3.12
-  table:put contact "CtoE" 1.48
+  table:put contact "YtoE" 1.48
   table:put contact "AtoA" 9.62
   table:put contact "AtoE" 4.25
   table:put contact "EtoE" 5.11
@@ -18,32 +18,56 @@ to check-turtles2
   show "check-2"
   let n 0
   while [n < count turtles][
+    ;;loop through all the turtles to check if the number of links between different breeds is 
+    ;; roughly the same as the contact rate
     ask turtle n [
-     
+      show "n"
+
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;; First check the infant turtles
+      ;; The number of links with other infants is checked first, than
+      ;; the links with youths, adults and elders, respectively
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
       ifelse breed = infants
       [
-        
+           
         show "This is an infant"
-        let ItoICount count link-neighbors with [breed = infants]
         
+        
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;Fist look at infant to infant connections  ;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        let ItoICount count link-neighbors with [breed = infants]
+        ;; calculate the number of links with other infants
+        ;; if this if less that the number of contacts, add new connections
         if ItoICount < round (table:get contact "ItoI")
         [
+          
           show "Too few infant to infant"
           set movenode1 turtle n
           set counter 0
            while [counter < (round(table:get contact "ItoI") - ItoICount)]
          [
-           ;;while z is less than the number of links needed to be added
-           ;;pick a random turtle that isn't already a neighbour and doesn't have too high a degree
-          
+                   
            show movenode1
            set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = infants) and (count link-neighbors with [breed = infants]  < (table:get contact "ItoI")) ]
-          ask movenode1 [ create-link-with movenode2 [ set color yellow  ] ]
-          set counter counter + 1
-         ]
-          
-          
-        ]
+        ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+         ifelse movenode2 != nobody
+           [
+             ask movenode1 [ create-link-with movenode2 [ set color yellow  ] ]
+             set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( round (table:get contact "ItoI") - ItoICount  )
+           ]
+         ] ;; end of while loop
+        ] ;;end of too few infant-to-infant if loop
+        
+        ;; if there are too many infant to infant connections, kill some
         if ItoICount > round (table:get contact "ItoI")
         [
          show "Too many infant to infant" 
@@ -57,6 +81,7 @@ to check-turtles2
            set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = infants) and (count link-neighbors with [breed = infants]  > (table:get contact "ItoI"))]
            show "Turtle to chop"
            show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
            ifelse movenode2 != nobody
            [
              show "I don't want to break"
@@ -65,54 +90,1041 @@ to check-turtles2
            set counter counter + 1
            ]
            [
+             ;;set the counter so the loop is broken
              show "break the loop"
              set counter ( ItoICount - round (table:get contact "ItoI"))
            ]
           
-        ]
-         
-         
-        ]
-      
+         ];; end of while loop
+               
+        ];; end of to many infant to infant
         
-        show ItoIcount
-        
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;; Next check the infant to youth links   ;;;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;get the number of links to youths
         let ItoYCount count link-neighbors with [breed = youths]
         show ItoYCount
         show "ItoY Value"
         show table:get contact "ItoY"
+        
+        ;;If there are too few infant to youth links
         if ItoYCount <  round (table:get contact "ItoY")
         [
-          
-          
+                   
           show "Too few youths"
-        ]
+          set movenode1 turtle n
+          set counter 0
+          while [counter < (round(table:get contact "ItoY") - ItoYCount)]
+         [
+                   
+           show movenode1
+           set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = youths) and (count link-neighbors with [breed = infants]  < (table:get contact "ItoY")) ]
+        ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+         ifelse movenode2 != nobody
+           [
+             ask movenode1 [ create-link-with movenode2 [ set color red  ] ]
+             set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( round (table:get contact "ItoY") - ItoYCount  )
+           ]
+         ] ;; end of while loop
+        ];; end of IF too few infant to youth
         
-        
-        
-        show count link-neighbors with [breed = adults]
-        
-        show count link-neighbors with [breed = elders]
-        
-        let ItoECount count link-neighbors with [breed = elders]
-        if ItoEcount < table:get contact "ItoE"
+         ;; if there are too many infant to youth connections, kill some
+        if ItoYCount > round (table:get contact "ItoY")
         [
-          show "not enought elders"
-        ]
+         show "Too many infant to youth" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( ItoYCount - round (table:get contact "ItoY"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( ItoYCount - round (table:get contact "ItoY"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = youths) and (count link-neighbors with [breed = infants]  > (table:get contact "ItoY"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( ItoYCount - round (table:get contact "ItoY"))
+           ]          
+         ];; end of while loop
+        ];; end of IF too many infant to youth
         
-      ]
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;; Check Infant to Adult connection      ;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+       
+       ;; check the number of links between infants and adults
+       let ItoACount count link-neighbors with [breed = adults] 
+       show ItoACount
+       show "ItoA Value"
+       show table:get contact "ItoA"
+       
+       ;;If there are too few infant to adult links
+       if ItoACount <  round (table:get contact "ItoA")
+        [
+          
+          show "Too few adults"
+          set movenode1 turtle n
+          set counter 0
+          while [counter < (round(table:get contact "ItoA") - ItoACount)]
+          [
+            show movenode1
+            set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = adults) and (count link-neighbors with [breed = infants]  < (table:get contact "ItoA")) ]
+            ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+            ifelse movenode2 != nobody
+            [
+              ask movenode1 [ create-link-with movenode2 [ set color violet  ] ]
+              set counter counter + 1
+            ]
+            [
+              ;;set the counter so the loop is broken
+              show "break the loop"
+              set counter ( round (table:get contact "ItoA") - ItoACount  )
+            ]
+          ] ;; end of while loop
+        ];; end of IF too few infant to adult
+        
+         ;; if there are too many infant to adult connections, kill some
+        if ItoACount > round (table:get contact "ItoA")
+        [
+         show "Too many infant to adult" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( ItoACount - round (table:get contact "ItoA"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( ItoACount - round (table:get contact "ItoA"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = adults) and (count link-neighbors with [breed = infants]  > (table:get contact "ItoA"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( ItoACount - round (table:get contact "ItoA"))
+           ]          
+         ];; end of while loop
+        ];; end of IF too many infant to adult
+        
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;; Check Infant to Elder connection      ;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        
+        ;; check the number of links between infants and adults
+        let ItoECount count link-neighbors with [breed = elders] 
+        show ItoECount
+        show "ItoE Value"
+        show table:get contact "ItoE"
+        
+        ;;If there are too few infant to adult links
+        if ItoECount <  round (table:get contact "ItoE")
+        [
+          
+          show "Too few elders"
+          set movenode1 turtle n
+          set counter 0
+          while [counter < (round(table:get contact "ItoE") - ItoECount)]
+          [
+            show movenode1
+            set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = elders) and (count link-neighbors with [breed = infants]  < (table:get contact "ItoE")) ]
+            ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+            ifelse movenode2 != nobody
+            [
+              ask movenode1 [ create-link-with movenode2 [ set color green  ] ]
+              set counter counter + 1
+            ]
+            [
+              ;;set the counter so the loop is broken
+              show "break the loop"
+              set counter ( round (table:get contact "ItoE") - ItoECount  )
+            ]
+          ] ;; end of while loop
+        ];; end of IF too few infant to elder
+        
+         ;; if there are too many infant to infant connections, kill some
+        if ItoECount > round (table:get contact "ItoE")
+        [
+         show "Too many infant to elder" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( ItoECount - round (table:get contact "ItoE"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( ItoECount - round (table:get contact "ItoE"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = elders) and (count link-neighbors with [breed = infants]  > (table:get contact "ItoA"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( ItoECount - round (table:get contact "ItoE"))
+           ]          
+         ];; end of while loop
+        ];; end of IF too many infant to adult
+      ];; end of checking infants
       
+      ;;;;;;;;;;;;;;;;
+      ;; Second bit
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;;Check youths
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
       
       [
-      ]
+         ifelse breed = youths
+      [
+           
+        show "This is a youth"
+        
+        
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;Fist look at youth to infant connections  ;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        let YtoICount count link-neighbors with [breed = infants]
+        ;; calculate the number of links with other infants
+        ;; if this if less that the number of contacts, add new connections
+        if YtoICount < round (table:get contact "ItoY")
+        [
+          
+          show "Too few youth to infant"
+          set movenode1 turtle n
+          set counter 0
+           while [counter < (round(table:get contact "ItoY") - YtoICount)]
+         [
+                   
+           show movenode1
+           set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = infants) and (count link-neighbors with [breed = youths]  < (table:get contact "ItoY")) ]
+        ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+         ifelse movenode2 != nobody
+           [
+             ask movenode1 [ create-link-with movenode2 [ set color yellow  ] ]
+             set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( round (table:get contact "ItoY") - YtoICount  )
+           ]
+         ] ;; end of while loop
+        ] ;;end of too few infant-to-infant if loop
+        
+        ;; if there are too many youth to infant connections, kill some
+        if YtoICount > round (table:get contact "ItoY")
+        [
+         show "Too many youth to infant" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( YtoICount - round (table:get contact "ItoY"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( YtoICount - round (table:get contact "ItoY"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = infants) and (count link-neighbors with [breed = youths]  > (table:get contact "ItoY"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( YtoICount - round (table:get contact "ItoY"))
+           ]
+          
+         ];; end of while loop
+               
+        ];; end of to many youth to infant
+        
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;; Next check the youth to youth links   ;;;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;get the number of links to youths
+        let YtoYCount count link-neighbors with [breed = youths]
+        show YtoYCount
+        show "YtoY Value"
+        show table:get contact "YtoY"
+        
+        ;;If there are too few youth to youth links
+        if YtoYCount <  round (table:get contact "YtoY")
+        [
+                   
+          show "Too few youths"
+          set movenode1 turtle n
+          set counter 0
+          while [counter < (round(table:get contact "YtoY") - YtoYCount)]
+         [
+                   
+           show movenode1
+           set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = youths) and (count link-neighbors with [breed = youths]  < (table:get contact "YtoY")) ]
+           ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+           ifelse movenode2 != nobody
+           [
+             ask movenode1 [ create-link-with movenode2 [ set color red  ] ]
+             set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( round (table:get contact "YtoY") - YtoYCount  )
+           ]
+         ] ;; end of while loop
+        ];; end of IF too few youth to youth
+        
+         ;; if there are too many youth to youth connections, kill some
+        if YtoYCount > round (table:get contact "YtoY")
+        [
+         show "Too many youth to youth" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( YtoYCount - round (table:get contact "YtoY"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( YtoYCount - round (table:get contact "YtoY"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = youths) and (count link-neighbors with [breed = youths]  > (table:get contact "YtoY"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( YtoYCount - round (table:get contact "YtoY"))
+           ]          
+         ];; end of while loop
+        ];; end of IF too many youth to youth
+        
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;; Check Youth to Adult connection      ;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+       
+       ;; check the number of links between infants and adults
+       let YtoACount count link-neighbors with [breed = adults] 
+       show YtoACount
+       show "YtoA Value"
+       show table:get contact "YtoA"
+       
+       ;;If there are too few infant to adult links
+       if YtoACount <  round (table:get contact "YtoA")
+        [
+          
+          show "Too few adults"
+          set movenode1 turtle n
+          set counter 0
+          while [counter < (round(table:get contact "YtoA") - YtoACount)]
+          [
+            show movenode1
+            set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = adults) and (count link-neighbors with [breed = youths]  < (table:get contact "YtoA")) ]
+            ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+            ifelse movenode2 != nobody
+            [
+              ask movenode1 [ create-link-with movenode2 [ set color violet  ] ]
+              set counter counter + 1
+            ]
+            [
+              ;;set the counter so the loop is broken
+              show "break the loop"
+              set counter ( round (table:get contact "YtoA") - YtoACount  )
+            ]
+          ] ;; end of while loop
+        ];; end of IF too few youth to adult
+    
+         ;; if there are too many youth to adult connections, kill some
+        if YtoACount > round (table:get contact "YtoA")
+        [
+         show "Too many youth to adult" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( YtoACount - round (table:get contact "YtoA"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( YtoACount - round (table:get contact "YtoA"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = adults) and (count link-neighbors with [breed = youths]  > (table:get contact "YtoA"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( YtoACount - round (table:get contact "YtoA"))
+           ]          
+         ];; end of while loop
+        ];; end of IF too many infant to adult
+        
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;; Check Youth to Elder connection      ;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        
+        ;; check the number of links between infants and adults
+        let YtoECount count link-neighbors with [breed = elders] 
+        show YtoECount
+        show "YtoE Value"
+        show table:get contact "YtoE"
+        
+        ;;If there are too few infant to adult links
+        if YtoECount <  round (table:get contact "YtoE")
+        [
+          
+          show "Too few elders"
+          set movenode1 turtle n
+          set counter 0
+          while [counter < (round(table:get contact "YtoE") - YtoECount)]
+          [
+            show movenode1
+            set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = elders) and (count link-neighbors with [breed = youths]  < (table:get contact "YtoE")) ]
+            ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+            ifelse movenode2 != nobody
+            [
+              ask movenode1 [ create-link-with movenode2 [ set color green  ] ]
+              set counter counter + 1
+            ]
+            [
+              ;;set the counter so the loop is broken
+              show "break the loop"
+              set counter ( round (table:get contact "YtoE") - YtoECount  )
+            ]
+          ] ;; end of while loop
+        ];; end of IF too few youth to elder
+        
+         ;; if there are too many youth to elder connections, kill some
+        if YtoECount > round (table:get contact "YtoE")
+        [
+         show "Too many youth to elder" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( YtoECount - round (table:get contact "YtoE"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( YtoECount - round (table:get contact "YtoE"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = elders) and (count link-neighbors with [breed = youths]  > (table:get contact "YtoA"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( YtoECount - round (table:get contact "YtoE"))
+           ]          
+         ];; end of while loop
+        ];; end of IF too many youth to elder
+      ];; end of checking youths
+           
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;;;;;;;Third bit                      ;;;;;;;;;;;;;;;;
+      ;;;;;;;Checking adult nodes           ;;;;;;;;;;;;;;;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      [ ;;stuff 1
+        ifelse breed = adults
+        [ ;;stuff 2
+          
+          show "This is an adult"
+          
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;;Fist look at adult to infant connections  ;;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          let AtoICount count link-neighbors with [breed = infants]
+          ;; calculate the number of links with other infants
+          ;; if this if less that the number of contacts, add new connections
+          if AtoICount < round (table:get contact "ItoA")
+          [
+            
+            show "Too few youth to infant"
+            set movenode1 turtle n
+            set counter 0
+            while [counter < (round(table:get contact "ItoA") - AtoICount)]
+            [
+              
+              show movenode1
+              set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = infants) and (count link-neighbors with [breed = adults]  < (table:get contact "ItoA")) ]
+              ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+              ifelse movenode2 != nobody
+              [
+                ask movenode1 [ create-link-with movenode2 [ set color yellow  ] ]
+                set counter counter + 1
+              ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( round (table:get contact "ItoA") - AtoICount  )
+           ]
+         ] ;; end of while loop
+        ] ;;end of too few infant-to-infant if loop
+        
+        ;; if there are too many youth to infant connections, kill some
+        if AtoICount > round (table:get contact "ItoA")
+        [
+         show "Too many adult to infant" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( AtoICount - round (table:get contact "ItoA"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( AtoICount - round (table:get contact "ItoA"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = infants) and (count link-neighbors with [breed = adults]  > (table:get contact "ItoA"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( AtoICount - round (table:get contact "ItoA"))
+           ]
+          
+         ];; end of while loop
+               
+        ];; end of to many adult to infant
+        
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;; Next check the adult to youth links   ;;;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;get the number of links to youths
+        let AtoYCount count link-neighbors with [breed = youths]
+        show atoYCount
+        show "AtoY Value"
+        show table:get contact "YtoA"
+        
+        ;;If there are too few youth to youth links
+        if AtoYCount <  round (table:get contact "YtoA")
+        [
+                   
+          show "Too few youths"
+          set movenode1 turtle n
+          set counter 0
+          while [counter < (round(table:get contact "YtoA") - AtoYCount)]
+         [
+                   
+           show movenode1
+           set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = youths) and (count link-neighbors with [breed = adults]  < (table:get contact "YtoA")) ]
+           ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+           ifelse movenode2 != nobody
+           [
+             ask movenode1 [ create-link-with movenode2 [ set color red  ] ]
+             set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( round (table:get contact "YtoA") - AtoYCount  )
+           ]
+         ] ;; end of while loop
+        ];; end of IF too few youth to youth
+        
+         ;; if there are too many youth to youth connections, kill some
+        if AtoYCount > round (table:get contact "YtoA")
+        [
+         show "Too many youth to youth" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( AtoYCount - round (table:get contact "YtoA"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( AtoYCount - round (table:get contact "YtoA"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = youths) and (count link-neighbors with [breed = adults]  > (table:get contact "YtoA"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( AtoYCount - round (table:get contact "YtoA"))
+           ]          
+         ];; end of while loop
+        ];; end of IF too many youth to youth
+        
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;; Check adult to Adult connection      ;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+       
+       ;; check the number of links between adults and adults
+       let AtoACount count link-neighbors with [breed = adults] 
+       show AtoACount
+       show "AtoA Value"
+       show table:get contact "AtoA"
+       
+       ;;If there are too few adult to adult links
+       if AtoACount <  round (table:get contact "AtoA")
+        [
+          
+          show "Too few adults"
+          set movenode1 turtle n
+          set counter 0
+          while [counter < (round(table:get contact "AtoA") - AtoACount)]
+          [
+            show movenode1
+            set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = adults) and (count link-neighbors with [breed = adults]  < (table:get contact "AtoA")) ]
+            ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+            ifelse movenode2 != nobody
+            [
+              ask movenode1 [ create-link-with movenode2 [ set color violet  ] ]
+              set counter counter + 1
+            ]
+            [
+              ;;set the counter so the loop is broken
+              show "break the loop"
+              set counter ( round (table:get contact "AtoA") - AtoACount  )
+            ]
+          ] ;; end of while loop
+        ];; end of IF too few adult to adult
+    
+         ;; if there are too many adult to adult connections, kill some
+        if AtoACount > round (table:get contact "AtoA")
+        [
+         show "Too many adult to adult" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( AtoACount - round (table:get contact "AtoA"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( AtoACount - round (table:get contact "AtoA"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = adults) and (count link-neighbors with [breed = adults]  > (table:get contact "AtoA"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( AtoACount - round (table:get contact "AtoA"))
+           ]          
+         ];; end of while loop
+        ];; end of IF too many adult to adult
+        
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;; Check adult to Elder connection      ;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        
+        ;; check the number of links between adults and elders
+        let AtoECount count link-neighbors with [breed = elders] 
+        show AtoECount
+        show "AtoE Value"
+        show table:get contact "AtoE"
+        
+        ;;If there are too few infant to adult links
+        if AtoECount <  round (table:get contact "AtoE")
+        [
+          
+          show "Too few elders"
+          set movenode1 turtle n
+          set counter 0
+          while [counter < (round(table:get contact "AtoE") - AtoECount)]
+          [
+            show movenode1
+            set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = elders) and (count link-neighbors with [breed = adults]  < (table:get contact "AtoE")) ]
+            ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+            ifelse movenode2 != nobody
+            [
+              ask movenode1 [ create-link-with movenode2 [ set color green  ] ]
+              set counter counter + 1
+            ]
+            [
+              ;;set the counter so the loop is broken
+              show "break the loop"
+              set counter ( round (table:get contact "AtoE") - AtoECount  )
+            ]
+          ] ;; end of while loop
+        ];; end of IF too few adult to elder
+        
+         ;; if there are too many adult to elder connections, kill some
+        if AtoECount > round (table:get contact "AtoE")
+        [
+         show "Too many adult to elder" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( AtoECount - round (table:get contact "AtoE"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( AtoECount - round (table:get contact "AtoE"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = elders) and (count link-neighbors with [breed = adults]  > (table:get contact "AtoE"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( AtoECount - round (table:get contact "AtoE"))
+           ]          
+         ];; end of while loop
+        ];; end of IF too many adult to elder
+      ];; end of checking adults
+       
+      [
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;;;;;;Fourth bit                      ;;;;;;;;;;;;;;;;
+        ;;;;;;;Checking adult nodes           ;;;;;;;;;;;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;; as already checked for infant, youth and adult, anything left is and elder.
+        ;;;;;;;
+        
+        show "This is an elder"
+                  
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          ;;Fist look at elder to infant connections  ;;;
+          ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+          let EtoICount count link-neighbors with [breed = infants]
+          ;; calculate the number of links with other infants
+          ;; if this if less that the number of contacts, add new connections
+          if EtoICount < round (table:get contact "ItoE")
+          [
+            
+            show "Too few youth to infant"
+            set movenode1 turtle n
+            set counter 0
+            while [counter < (round(table:get contact "ItoE") - EtoICount)]
+            [
+              
+              show movenode1
+              set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = infants) and (count link-neighbors with [breed = elders]  < (table:get contact "ItoE")) ]
+              ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+              ifelse movenode2 != nobody
+              [
+                ask movenode1 [ create-link-with movenode2 [ set color yellow  ] ]
+                set counter counter + 1
+              ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( round (table:get contact "ItoE") - EtoICount  )
+           ]
+         ] ;; end of while loop
+        ] ;;end of too few infant-to-infant if loop
+        
+        ;; if there are too many youth to infant connections, kill some
+        if EtoICount > round (table:get contact "ItoE")
+        [
+         show "Too many adult to infant" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( EtoICount - round (table:get contact "ItoE"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( EtoICount - round (table:get contact "ItoE"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = infants) and (count link-neighbors with [breed = elders]  > (table:get contact "ItoE"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( EtoICount - round (table:get contact "ItoE"))
+           ]
+          
+         ];; end of while loop
+               
+        ];; end of to many elder to infant
+        
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+      ;; Next check the elder to youth links   ;;;;
+      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;;get the number of links to youths
+        let EtoYCount count link-neighbors with [breed = youths]
+        show EtoYCount
+        show "EtoY Value"
+        show table:get contact "YtoE"
+        
+        ;;If there are too few youth to youth links
+        if EtoYCount <  round (table:get contact "YtoE")
+        [
+                   
+          show "Too few youths"
+          set movenode1 turtle n
+          set counter 0
+          while [counter < (round(table:get contact "YtoE") - EtoYCount)]
+         [
+                   
+           show movenode1
+           set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = youths) and (count link-neighbors with [breed = elders]  < (table:get contact "YtoE")) ]
+           ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+           ifelse movenode2 != nobody
+           [
+             ask movenode1 [ create-link-with movenode2 [ set color red  ] ]
+             set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( round (table:get contact "YtoE") - EtoYCount  )
+           ]
+         ] ;; end of while loop
+        ];; end of IF too few elder to youth
+        
+         ;; if there are too many youth to youth connections, kill some
+        if EtoYCount > round (table:get contact "YtoE")
+        [
+         show "Too many elder to youth" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( EtoYCount - round (table:get contact "YtoE"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( EtoYCount - round (table:get contact "YtoE"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = youths) and (count link-neighbors with [breed = elders]  > (table:get contact "YtoE"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( EtoYCount - round (table:get contact "YtoE"))
+           ]          
+         ];; end of while loop
+        ];; end of IF too many elder to youth
+        
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;; Check Elder to Adult connection      ;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+       
+       ;; check the number of links between adults and adults
+       let EtoACount count link-neighbors with [breed = adults] 
+       show EtoACount
+       show "EtoA Value"
+       show table:get contact "AtoE"
+       
+       ;;If there are too few adult to adult links
+       if EtoACount <  round (table:get contact "AtoE")
+        [
+          
+          show "Too few adults"
+          set movenode1 turtle n
+          set counter 0
+          while [counter < (round(table:get contact "AtoE") - EtoACount)]
+          [
+            show movenode1
+            set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = adults) and (count link-neighbors with [breed = elders]  < (table:get contact "AtoE")) ]
+            ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+            ifelse movenode2 != nobody
+            [
+              ask movenode1 [ create-link-with movenode2 [ set color violet  ] ]
+              set counter counter + 1
+            ]
+            [
+              ;;set the counter so the loop is broken
+              show "break the loop"
+              set counter ( round (table:get contact "AtoE") - EtoACount  )
+            ]
+          ] ;; end of while loop
+        ];; end of IF too few adult to adult
+    
+         ;; if there are too many adult to adult connections, kill some
+        if EtoACount > round (table:get contact "AtoE")
+        [
+         show "Too many elder to adult" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( EtoACount - round (table:get contact "AtoE"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( EtoACount - round (table:get contact "AtoE"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = adults) and (count link-neighbors with [breed = elders]  > (table:get contact "AtoE"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( EtoACount - round (table:get contact "AtoE"))
+           ]          
+         ];; end of while loop
+        ];; end of IF too many adult to adult
+        
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        ;; Check elder to Elder connection      ;;;;;
+        ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+        
+        ;; check the number of links between adults and elders
+        let EtoECount count link-neighbors with [breed = elders] 
+        show EtoECount
+        show "EtoE Value"
+        show table:get contact "EtoE"
+        
+        ;;If there are too few infant to adult links
+        if EtoECount <  round (table:get contact "EtoE")
+        [
+          
+          show "Too few elders"
+          set movenode1 turtle n
+          set counter 0
+          while [counter < (round(table:get contact "EtoE") - EtoECount)]
+          [
+            show movenode1
+            set movenode2 one-of turtles with [ (self != movenode1) and (not link-neighbor? movenode1) and (breed = elders) and (count link-neighbors with [breed = elders]  < (table:get contact "EtoE")) ]
+            ;;check to ensure there is a turtle satisfying the conditions, if not, break the loop 
+            ifelse movenode2 != nobody
+            [
+              ask movenode1 [ create-link-with movenode2 [ set color green  ] ]
+              set counter counter + 1
+            ]
+            [
+              ;;set the counter so the loop is broken
+              show "break the loop"
+              set counter ( round (table:get contact "EtoE") - EtoECount  )
+            ]
+          ] ;; end of while loop
+        ];; end of IF too few adult to elder
+        
+         ;; if there are too many adult to elder connections, kill some
+        if EtoECount > round (table:get contact "EtoE")
+        [
+         show "Too many adult to elder" 
+         set movenode1 turtle n
+         set counter 0
+         while [ counter < ( EtoECount - round (table:get contact "EtoE"))]
+         [
+           show "Counter 2"
+           show counter
+           show ( EtoECount - round (table:get contact "EtoE"))
+           set movenode2 one-of turtles with [ (self != movenode1) and (link-neighbor? movenode1) and (breed = elders) and (count link-neighbors with [breed = elders]  > (table:get contact "EtoE"))]
+           show "Turtle to chop"
+           show movenode2
+           ;;make sure that there is a turtle satisfying the conditions, if not break out of the loop
+           ifelse movenode2 != nobody
+           [
+             show "I don't want to break"
+             ;; ask movenode2 [show count my-links]
+           ask movenode1 [ ask link-with movenode2 [ die ] ] 
+           set counter counter + 1
+           ]
+           [
+             ;;set the counter so the loop is broken
+             show "break the loop"
+             set counter ( EtoECount - round (table:get contact "EtoE"))
+           ]          
+         ];; end of while loop
+        ];; end of IF too many elder to elder
+        
+        
+        
+      
+      ];;end of breed = elder
+                
+      ];;end of  breed = adult
+      
+      ];;end of  breed=youth
 
 
 
 
-    ]
+    ];;end of ask turtles
     set n n + 1
-  ]
-  
+  ];;end of loop over tutrles
   show table:get contact "ItoI"
   
 end
