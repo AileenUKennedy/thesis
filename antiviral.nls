@@ -1,0 +1,32 @@
+;; antivirals are given to severe patients.
+;; The aim is to move from severe to moderate
+;; and thus have a shorter recovery
+;; Antivirals are a limited resource
+;; In the base case, no anti-virals are available.
+
+;; Anti-virals have an efficacy value so may or may not work depending on that.
+
+
+to antiviralDose
+
+ set antiViralRandom  random 100 
+  
+  
+  if  AntiViralStock > 0 
+  [
+    set AntiViralStock AntiViralStock - 1
+   ;; if susceptible? and vaccineRandom <= (vaccineEfficacy / 10)
+    if infected? and severe? and antiViralRandom <= antiviralEfficacy
+    [
+      set asymptomatic? false
+      set moderate? true
+      set severe? false
+      set color orange
+    ]
+    show AntiViralStock
+  ]
+
+
+  
+  
+end

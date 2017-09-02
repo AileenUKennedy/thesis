@@ -1,4 +1,4 @@
-__includes["calculations.nls" "wire.nls" "smallworld.nls" "normalDistribution.nls" "checkTurtles.nls" "checkTurtles2.nls"]
+__includes["calculations.nls" "wire.nls" "smallworld.nls" "normalDistribution.nls" "checkTurtles.nls" "checkTurtles2.nls" "vaccine.nls" "antiviral.nls"]
 
 extensions [ table]
 
@@ -63,7 +63,18 @@ globals
   counter ;;counter
   calcAvgDegree
 
+  vaccineRandom ;; number used in determining if vaccine works or not based on vaccine efficacy
+
+  antiViralRandom ;; number used in determining if antibiral works or not based on antiviral efficacy
+
   contact ;; table with contact rates between age groups
+
+ ;; vaccine? ;; boolean to say whether vaccine is available or not. VaccineStock shows number vaccines available
+
+ ;; anitviral? ;; boolean to say whether antiViral is available or not. AntiViralStock shows available stock
+
+
+
 
 ]
 
@@ -121,11 +132,6 @@ while [not SWsuccess?]
 
   set ce 2
   set p ce / totalNodes
-
-
-
-
-
 
   reset-ticks
 end
@@ -185,6 +191,20 @@ ask turtles with [ preinfectious?]
     ]
   ]
 
+if ticks = 0 and vaccine? = TRUE
+[
+ show "one TICK!!!!!!!!"
+ ask turtles with [ susceptible? or preinfectious?]
+ [
+   vaccinate
+ ]
+
+]
+
+ask turtles with [ infected? and severe? ]
+[
+ antiViralDose
+]
 
 ;; increment and check timer on infected turtles
 ;; if above recovery delay move to recovered
@@ -587,22 +607,22 @@ Number-0-4
 Number-0-4
 0
 1000
-38.0
+15.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-693
+689
 48
-865
+861
 81
 Number-5-14
 Number-5-14
 0
 1000
-32.0
+40.0
 1
 1
 NIL
@@ -617,7 +637,7 @@ Number-15-44
 Number-15-44
 0
 1000
-13.0
+76.0
 1
 1
 NIL
@@ -632,17 +652,17 @@ Number-45
 Number-45
 0
 1000
-13.0
+69.0
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-977
-19
-1149
-52
+943
+10
+1115
+43
 relative0-4
 relative0-4
 0
@@ -654,10 +674,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-976
-53
-1148
-86
+942
+44
+1114
+77
 relative5-14
 relative5-14
 0
@@ -669,10 +689,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-974
-91
-1146
-124
+940
+82
+1112
+115
 relative15-44
 relative15-44
 0
@@ -684,10 +704,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-979
-129
-1151
-162
+945
+120
+1117
+153
 relative45
 relative45
 0
@@ -699,10 +719,10 @@ NIL
 HORIZONTAL
 
 INPUTBOX
-979
-172
-1050
-232
+1068
+415
+1139
+475
 erCC
 0.1014
 1
@@ -710,10 +730,10 @@ erCC
 Number
 
 INPUTBOX
+999
+415
 1063
-174
-1127
-234
+475
 erPath
 2.2492
 1
@@ -736,10 +756,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-977
-244
-1149
-277
+10
+387
+182
+420
 severityMean
 severityMean
 0
@@ -751,16 +771,128 @@ NIL
 HORIZONTAL
 
 SLIDER
-977
-277
-1149
-310
+10
+345
+182
+378
 severitySD
 severitySD
 0
 20
 2.0
 0.001
+1
+NIL
+HORIZONTAL
+
+SLIDER
+690
+221
+862
+254
+VaccineStock
+VaccineStock
+0
+200
+50.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+688
+259
+860
+292
+AntiViralStock
+AntiViralStock
+0
+200
+5.0
+1
+1
+NIL
+HORIZONTAL
+
+SWITCH
+866
+219
+969
+252
+vaccine?
+vaccine?
+0
+1
+-1000
+
+SWITCH
+863
+262
+968
+295
+antiviral?
+antiviral?
+1
+1
+-1000
+
+SLIDER
+971
+161
+1143
+194
+vaccineEfficacy
+vaccineEfficacy
+0
+100
+60.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+971
+197
+1143
+230
+antiviralEfficacy
+antiviralEfficacy
+0
+100
+50.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+972
+239
+1144
+272
+vaccineSD
+vaccineSD
+0
+100
+1.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+973
+278
+1145
+311
+antiViralSD
+antiViralSD
+0
+100
+1.0
+1
 1
 NIL
 HORIZONTAL

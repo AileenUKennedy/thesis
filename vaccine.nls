@@ -1,0 +1,44 @@
+;; the vaccine has an efficacy which determines whether it work or not
+;; eg an efficacy of 60% means that in 3/5 cases, person becomes immune, 2/5 it doesn't work
+;; Using a normal distribution, set mean to efficacy ie 6 for 60% and draw a number 
+;; if random number is less than or equal to 6, say it work. Else it doesn't
+;; if vaccine works, individual is moved from susceptible to removed groups
+;; either suscpetible or preinfectious individuals are offered the vaccine.
+;; pre-infectious individuals don't show symptoms but are already infected.
+;; as it stands, vaccines are only given in the first round so there are no pre-infectious
+;; 
+;; Vaccines are a limited resourse.
+
+to pickVacNumber
+  
+  set vaccineRandom random-normal (vaccineEfficacy / 10 ) vaccineSD 
+  
+  
+  
+  
+end
+
+
+
+to vaccinate
+  
+  set vaccineRandom random-normal (vaccineEfficacy / 10 ) vaccineSD 
+  
+  set vaccineRandom  random 100 
+  
+  
+  if  VaccineStock > 0 
+  [
+    set VaccineStock VaccineStock - 1
+   ;; if susceptible? and vaccineRandom <= (vaccineEfficacy / 10)
+    if susceptible? and vaccineRandom <= vaccineEfficacy
+    [
+      set-removed
+    ]
+    show VaccineStock
+  ]
+
+
+
+end
+
