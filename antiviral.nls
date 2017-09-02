@@ -8,6 +8,8 @@
 
 
 to antiviralDose
+  
+  show "ANTI VIRAL DOSE ADMINISTRATION"
 
  set antiViralRandom  random 100 
   

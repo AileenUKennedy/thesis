@@ -201,11 +201,14 @@ if ticks = 0 and vaccine? = TRUE
 
 ]
 
-ask turtles with [ infected? and severe? ]
+if antiviral? and AntiViralStock > 0
 [
- antiViralDose
-]
+  ask turtles with [ infected? and severe?]
+  [
 
+    antiViralDose
+  ]
+]
 ;; increment and check timer on infected turtles
 ;; if above recovery delay move to recovered
 ask turtles with [infected?]
@@ -809,7 +812,7 @@ AntiViralStock
 AntiViralStock
 0
 200
-5.0
+45.0
 1
 1
 NIL
@@ -822,17 +825,6 @@ SWITCH
 252
 vaccine?
 vaccine?
-0
-1
--1000
-
-SWITCH
-863
-262
-968
-295
-antiviral?
-antiviral?
 1
 1
 -1000
@@ -896,6 +888,17 @@ antiViralSD
 1
 NIL
 HORIZONTAL
+
+SWITCH
+868
+263
+973
+296
+antiviral?
+antiviral?
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
