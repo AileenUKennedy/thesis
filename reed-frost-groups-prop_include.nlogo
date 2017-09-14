@@ -64,17 +64,20 @@ globals
   calcAvgDegree
 
   vaccineRandom ;; number used in determining if vaccine works or not based on vaccine efficacy
-
   antiViralRandom ;; number used in determining if antibiral works or not based on antiviral efficacy
+                  ;; vaccine? ;; boolean to say whether vaccine is available or not. VaccineStock shows number vaccines available
+                  ;; anitviral? ;; boolean to say whether antiViral is available or not. AntiViralStock shows available stock
 
   contact ;; table with contact rates between age groups
 
- ;; vaccine? ;; boolean to say whether vaccine is available or not. VaccineStock shows number vaccines available
+  ;;asympProp ;;proportion of population asymptomatic
+  ;;severeProp ;;proportion of poulation severe
+  modProp ;; propoation of population moderate
 
- ;; anitviral? ;; boolean to say whether antiViral is available or not. AntiViralStock shows available stock
-
-
-
+  schoolDaysToClose ;;used to hold number of days school will be closed. Equal to number of weeks * 7
+  schoolDays ;; keep count of how long school has been closed.
+ ;; r0 ;;R0 for influenza
+  infect-prob-calc ;;calculate transmissioin probability
 
 ]
 
@@ -95,7 +98,7 @@ set elder-degree (average-degree * relative45)
 
 set severe-recover-delay (recovery-delay + severe-extra-delay)
 
-
+;;set r0 2
 
 show "here"
 make-turtles
@@ -133,6 +136,13 @@ while [not SWsuccess?]
   set ce 2
   set p ce / totalNodes
 
+
+  ;;Calculate number of days schools should close for
+  set schoolDaysToClose weeksClose * 7
+  show schoolDaysToClose
+  ;;; reset schoolDays counter to zero
+  set schoolDays 0
+  random-seed new-seed
   reset-ticks
 end
 
@@ -176,6 +186,7 @@ to go
 ;;show count turtles with [susceptible?]
 
 ;;stopping condition. If there are no infected or preinfectious turtles, then stop
+;; a stopping condition is necessary when using RNetLogo in non-GUI form
 if (count turtles with [infected?] = 0) and (count turtles with [preinfectious?] = 0)
 [
   stop
@@ -191,24 +202,7 @@ ask turtles with [ preinfectious?]
     ]
   ]
 
-if ticks = 0 and vaccine? = TRUE
-[
- show "one TICK!!!!!!!!"
- ask turtles with [ susceptible? or preinfectious?]
- [
-   vaccinate
- ]
 
-]
-
-if antiviral? and AntiViralStock > 0
-[
-  ask turtles with [ infected? and severe?]
-  [
-
-    antiViralDose
-  ]
-]
 ;; increment and check timer on infected turtles
 ;; if above recovery delay move to recovered
 ask turtles with [infected?]
@@ -224,7 +218,39 @@ ask turtles with [infected?]
       ]
   ]
 
-  spread-virus
+if ticks = 0 and vaccine? = TRUE
+[
+ show "lets get vaccinatitng!"
+ ask turtles with [ susceptible? ]
+ [
+   vaccinate
+ ]
+
+]
+
+if antiviral? and AntiViralStock > 0
+[
+  ask turtles with [ infected? and severe?]
+  [
+    antiViralDose
+  ]
+]
+
+
+if schoolClose?
+[
+  show "School Closed today"
+  set schoolDays schoolDays + 1
+  show schoolDays
+  if schoolDays > schoolDaysToClose
+  [
+    show "OPEN THE SCHOOLS!!!"
+    set schoolClose? FALSE
+  ]
+
+]
+
+  spread-virus2
   tick
 end
 
@@ -284,8 +310,33 @@ to set-infected ;;turtle procedure
   set infected-timer 0
  ;; set color red
 
- pickSeverity
 
+;;;Call function to determine if individual is severe/moderate/asymptomatic
+;; This is determined either by a user chosen oubreak severity - normal, severe, mild
+;; or user can specify the average proportion of asymptomatic, moderate, severe.
+ifelse UseLevel?
+[
+  ;;show "user level"
+  ifelse outbreakLevel = 1
+  [
+    ;;mild outbreak
+    pickSeverity1
+  ]
+  [ifelse outbreakLevel = 3
+    [
+      ;;severe outbreak
+      pickSeverity2
+    ]
+    [
+      ;;"normal" outbreak
+      pickSeverity
+    ]
+  ]
+]
+[
+  ;;show "proporstion"
+  propSeverity
+]
 
 
 end
@@ -314,8 +365,65 @@ to set-removed ;; turtle procedure
   set color green
 end
 
+
+to spread-virus2
+  ;; procedure to spread virus,
+  ;;for each turtle that is susceptible, check to see if it has any infected neighbours
+  ;; if it has at least 1 infected neighbour, use Reed-Frost formula to determine probability
+  ;; of becoming infected.
+
+
+  random-seed new-seed
+
+  ask turtles with [susceptible?]
+  [
+    set infected-2 count link-neighbors with [infected?]
+    set infected-nei-infant count link-neighbors with [breed = infants and infected?]
+    set infected-nei-youth count link-neighbors with [breed = youths and infected?]
+    set infected-nei-adult count link-neighbors with [breed = adults and infected?]
+    set infected-nei-elder  count link-neighbors with [breed = elders and infected?]
+
+    if infected-2 > 0
+    [
+      set infected-neighbours count link-neighbors with [infected?]
+
+      ;; calculate p, probability of infection
+      ;;
+      set infect-prob-calc r0 / (count link-neighbors * 2)
+
+
+      ifelse schoolClose? and breed = youths
+      [
+        show "Youths RUNNING FERAL!!!!!!!!!!"
+       ;; set lambda (1 - ( 1 - infect-prob) ^ infected-neighbours ) * schoolDecrease / 100
+        set lambda (1 - ( 1 - (infect-prob-calc * schoolDecrease / 100)) ^ infected-neighbours )
+      ]
+      [
+
+        ;;set lambda (1 - ( 1 - infect-prob) ^ infected-neighbours )
+        set lambda (1 - ( 1 - infect-prob-calc) ^ infected-neighbours )
+       ;; show lambda
+      ]
+
+
+      let ran random-float 1
+      show ran
+      if ran  < lambda
+
+        [
+
+          ;;  show "become pre-infectious"
+          set-preinfectious
+        ]
+    ]
+  ]
+
+
+end
+
 to spread-virus
   ;;show "spread-virus"
+  ;; This works by going through each infected turtle and then going through each of it's neighbours
   ask turtles with [infected?]
   [
     ask link-neighbors with [susceptible?]
@@ -362,7 +470,8 @@ to spread-virus
     if random-float 1 < lambda
       [
         ;;  show "become pre-infectious"
-        set-preinfectious]
+        set-preinfectious
+      ]
     ]
   ]
 end
@@ -402,10 +511,10 @@ ticks
 30.0
 
 BUTTON
-19
-16
-82
-49
+23
+10
+86
+43
 NIL
 setup\n
 NIL
@@ -419,10 +528,10 @@ NIL
 1
 
 BUTTON
-120
-19
-183
-52
+103
+10
+166
+43
 NIL
 go
 T
@@ -436,10 +545,10 @@ NIL
 0
 
 SLIDER
-16
-63
-188
-96
+17
+46
+189
+79
 average-degree
 average-degree
 2
@@ -451,15 +560,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-14
-141
-186
-174
+16
+118
+188
+151
 initial-infected
 initial-infected
 1
 100
-2.0
+1.0
 1
 1
 NIL
@@ -467,9 +576,9 @@ HORIZONTAL
 
 SLIDER
 13
-217
+191
 185
-250
+224
 infect-delay
 infect-delay
 1
@@ -481,10 +590,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-11
-258
-183
-291
+13
+230
+185
+263
 recovery-delay
 recovery-delay
 1
@@ -498,7 +607,7 @@ HORIZONTAL
 PLOT
 693
 312
-995
+971
 477
 Plot
 time
@@ -518,9 +627,9 @@ PENS
 
 SLIDER
 16
-102
+81
 188
-135
+114
 rewiring-probability
 rewiring-probability
 0
@@ -532,15 +641,15 @@ NIL
 HORIZONTAL
 
 SLIDER
-13
-177
-185
-210
+15
+154
+187
+187
 infect-prob
 infect-prob
 0
 1
-0.057
+0.14
 0.001
 1
 NIL
@@ -662,10 +771,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-943
-10
-1115
-43
+1183
+318
+1275
+351
 relative0-4
 relative0-4
 0
@@ -677,10 +786,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-942
-44
-1114
-77
+1185
+354
+1277
+387
 relative5-14
 relative5-14
 0
@@ -692,10 +801,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-940
-82
-1112
-115
+1184
+391
+1276
+424
 relative15-44
 relative15-44
 0
@@ -707,10 +816,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-945
-120
-1117
-153
+1183
+426
+1287
+459
 relative45
 relative45
 0
@@ -722,10 +831,10 @@ NIL
 HORIZONTAL
 
 INPUTBOX
-1068
-415
-1139
-475
+1193
+10
+1264
+70
 erCC
 0.1014
 1
@@ -733,10 +842,10 @@ erCC
 Number
 
 INPUTBOX
-999
-415
-1063
-475
+1123
+10
+1187
+70
 erPath
 2.2492
 1
@@ -745,9 +854,9 @@ Number
 
 SLIDER
 12
-301
+268
 184
-334
+301
 severe-extra-delay
 severe-extra-delay
 1
@@ -759,10 +868,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-10
-387
-182
-420
+8
+346
+180
+379
 severityMean
 severityMean
 0
@@ -774,10 +883,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-10
-345
-182
-378
+9
+307
+181
+340
 severitySD
 severitySD
 0
@@ -797,7 +906,7 @@ VaccineStock
 VaccineStock
 0
 200
-50.0
+0.0
 1
 1
 NIL
@@ -812,7 +921,7 @@ AntiViralStock
 AntiViralStock
 0
 200
-45.0
+0.0
 1
 1
 NIL
@@ -839,7 +948,7 @@ vaccineEfficacy
 0
 100
 60.0
-1
+5
 1
 NIL
 HORIZONTAL
@@ -854,7 +963,7 @@ antiviralEfficacy
 0
 100
 50.0
-1
+5
 1
 NIL
 HORIZONTAL
@@ -896,9 +1005,140 @@ SWITCH
 296
 antiviral?
 antiviral?
+1
+1
+-1000
+
+PLOT
+979
+320
+1179
+470
+plot1
+time
+people
+0.0
+100.0
+0.0
+100.0
+true
+true
+"" ""
+PENS
+"severe" 1.0 0 -2674135 true "" "plot (count turtles with [ severe?])"
+"moderate" 1.0 0 -13840069 true "" "plot (count turtles with [ moderate? ])"
+"asymp" 1.0 0 -13345367 true "" "plot ( count turtles with [ asymptomatic? ])"
+"all" 1.0 0 -1184463 true "" "plot (count turtles with [infected?])"
+
+CHOOSER
+8
+385
+100
+430
+outbreakLevel
+outbreakLevel
+1 2 3
+1
+
+INPUTBOX
+1120
+76
+1184
+136
+asympProp
+15.0
+1
+0
+Number
+
+INPUTBOX
+1191
+76
+1258
+136
+severeProp
+40.0
+1
+0
+Number
+
+SWITCH
+8
+431
+119
+464
+UseLevel?
+UseLevel?
 0
 1
 -1000
+
+SWITCH
+754
+177
+860
+210
+schoolClose
+schoolClose
+1
+1
+-1000
+
+SWITCH
+949
+14
+1075
+47
+schoolClose?
+schoolClose?
+1
+1
+-1000
+
+SLIDER
+943
+47
+1101
+80
+weeksClose
+weeksClose
+0
+10
+2.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+942
+79
+1104
+112
+schoolDecrease
+schoolDecrease
+0
+100
+70.0
+5
+1
+NIL
+HORIZONTAL
+
+SLIDER
+944
+122
+1116
+155
+r0
+r0
+0.9
+3
+1.3
+.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
